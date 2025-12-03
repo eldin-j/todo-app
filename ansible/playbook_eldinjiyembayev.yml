@@ -1,0 +1,73 @@
+
+- hosts: devops-server
+  become: yes
+
+  tasks:
+    # ---------------------------------------------------------
+    # Base packages
+    # ---------------------------------------------------------
+    - name: Install required base packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - apt-transport-https
+          - ca-certificates
+        state: present
+        update_cache: yes
+
+    # ---------------------------------------------------------
+    # Docker installation
+    # ---------------------------------------------------------
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # ---------------------------------------------------------
+    # Install kubectl from official .deb
+    # ---------------------------------------------------------
+    - name: Download kubectl .deb package
+      ansible.builtin.get_url:
+        url: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/amd64/kubectl.deb"
+        dest: /tmp/kubectl.deb
+        mode: "0644"
+        headers:
+          User-Agent: Mozilla/5.0
+
+    - name: Install kubectl from .deb
+      ansible.builtin.apt:
+        deb: /tmp/kubectl.deb
+        state: present
+
+    # ---------------------------------------------------------
+    # Install Minikube (if required in homework)
+    # ---------------------------------------------------------
+    - name: Install Minikube
+      ansible.builtin.get_url:
+        url: "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64"
+        dest: /usr/local/bin/minikube
+        mode: "0755"
+
+    # ---------------------------------------------------------
+    # Deploy Kubernetes manifests
+    # ---------------------------------------------------------
+    - name: Apply Kubernetes Deployment
+      ansible.builtin.command: >
+        kubectl apply -f /home/eldin/devops-practicum/todo-app/k8s/deployment_eldinjiyembayev.yaml
+      register: deploy_output
+    - debug: var=deploy_output.stdout
+
+    - name: Apply Kubernetes Service
+      ansible.builtin.command: >
+        kubectl apply -f /home/eldin/devops-practicum/todo-app/k8s/service_eldinjiyembayev.yaml
+      register: svc_output
+    - debug: var=svc_output.stdout
+
+

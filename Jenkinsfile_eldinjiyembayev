@@ -2,14 +2,15 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "todo-app"
         DOCKER_IMAGE = "todo-app:latest"
+        DOCKERFILE = "Dockerfile_eldinjiyembayev"
     }
 
     stages {
+
         stage('Clone') {
             steps {
-                git branch: 'main', url: 'https://github.com/eldin-j/todo-app.git'
+                git url: 'https://github.com/eldin-j/todo-app.git', branch: 'main'
             }
         }
 
@@ -21,21 +22,18 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker build -t ${DOCKER_IMAGE} -f Dockerfile_eldinjiyembayev .
-                '''
+                sh "docker build -t ${DOCKER_IMAGE} -f ${DOCKERFILE} ."
             }
         }
 
         stage('Run Docker Container') {
             steps {
                 sh '''
-                    # Stop old container
-                    docker stop ${APP_NAME} || true
-                    docker rm ${APP_NAME} || true
+                    docker stop todo-app || true
+                    docker rm todo-app || true
 
-                    # Run new container
-                    docker run -d --name ${APP_NAME} -p 8080:8080 ${DOCKER_IMAGE}
+                    # Run on port 9090 instead of 8080 to avoid conflict with Jenkins
+                    docker run -d --name todo-app -p 9090:8080 todo-app:latest
                 '''
             }
         }

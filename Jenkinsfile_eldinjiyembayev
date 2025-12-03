@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/eldin-j/todo-app.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh './gradlew clean build'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -f Dockerfile_eldinjiyembayev -t todo-app:latest .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh 'docker run -d --name todo-app -p 8080:8080 todo-app:latest'
+            }
+        }
+    }
+}

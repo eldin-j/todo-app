@@ -1,11 +1,15 @@
 pipeline {
     agent any
 
+    environment {
+        APP_NAME = "todo-app"
+        DOCKER_IMAGE = "todo-app:latest"
+    }
+
     stages {
         stage('Clone') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/eldin-j/todo-app.git'
+                git branch: 'main', url: 'https://github.com/eldin-j/todo-app.git'
             }
         }
 
@@ -17,13 +21,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -f Dockerfile_eldinjiyembayev -t todo-app:latest .'
+                sh '''
+                    docker build -t ${DOCKER_IMAGE} -f Dockerfile_eldinjiyembayev .
+                '''
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                sh 'docker run -d --name todo-app -p 8080:8080 todo-app:latest'
+                sh '''
+                    # Stop old container
+                    docker stop ${APP_NAME} || true
+                    docker rm ${APP_NAME} || true
+
+                    # Run new container
+                    docker run -d --name ${APP_NAME} -p 8080:8080 ${DOCKER_IMAGE}
+                '''
             }
         }
     }
